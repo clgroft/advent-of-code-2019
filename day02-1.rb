@@ -17,5 +17,5 @@ loop do
   end
   pc += 4
 end
-puts memory
+puts memory[0]
 

@@ -2,6 +2,7 @@ def run_program(initial_memory, noun, verb)
   memory = initial_memory.dup
   memory[1] = noun
   memory[2] = verb
+
   pc = 0
   loop do
     case memory[pc]
@@ -10,14 +11,13 @@ def run_program(initial_memory, noun, verb)
     when 2
       memory[memory[pc+3]] = memory[memory[pc+1]] * memory[memory[pc+2]]
     when 99
-      break
+      return memory[0]
     else
       puts "Error: memory[pc] = #{memory[pc]} is not a valid opcode"
-      break
+      exit 1
     end
     pc += 4
   end
-  memory[0]
 end
 
 def check_input(initial_memory, noun, verb)
