@@ -1,3 +1,10 @@
+$moves = {
+  "U" => ->(x, y) { return x, y+1 },
+  "D" => ->(x, y) { return x, y-1 },
+  "L" => ->(x, y) { return x-1, y },
+  "R" => ->(x, y) { return x+1, y }
+}
+
 def wire_distances(wire_codes)
   x, y = 0, 0
   distance_so_far = 0
@@ -6,17 +13,7 @@ def wire_distances(wire_codes)
   wire_codes.each do |code|
     direction, distance = code[0], code[1..-1].to_i
     distance.times do
-      case direction
-      when "U"
-        y += 1
-      when "D"
-        y -= 1
-      when "L"
-        x -= 1
-      when "R"
-        x += 1
-      end
-
+      x, y = $moves[direction].call(x, y)
       distance_so_far += 1
       all_distances[[x, y]] ||= distance_so_far
     end
