@@ -4,25 +4,27 @@ module Enumerable
   end
 end
 
-def char_chunks(num)
-  num.to_s.split('').chunk { |c| c }
-end
+class Fixnum
+  def char_chunks
+    to_s.split('').chunk(&:itself)
+  end
 
-def is_possible_password(num)
-  chunks = char_chunks(num)
-  chunks.sorted? && chunks.any? { |ck| ck[1].size >= 2 }
-end
+  def is_possible_password?
+    chunks = char_chunks
+    chunks.sorted? && chunks.any? { |_, b| b.size >= 2 }
+  end
 
-def is_possible_password_2(num)
-  chunks = char_chunks(num)
-  chunks.sorted? && chunks.any? { |ck| ck[1].size == 2 }
+  def is_possible_password_2?
+    chunks = char_chunks
+    chunks.sorted? && chunks.any? { |_, b| b.size == 2 }
+  end
 end
 
 bottom_of_range = ARGV[0].to_i
 top_of_range = ARGV[1].to_i
 
-possible_passwords = (bottom_of_range..top_of_range).select { |n| is_possible_password(n) }
+possible_passwords = (bottom_of_range..top_of_range).select(&:is_possible_password?)
 puts "Number of possible passwords (part 1): #{possible_passwords.size}"
 
-possible_passwords_2 = (bottom_of_range..top_of_range).select { |n| is_possible_password_2(n) }
+possible_passwords_2 = (bottom_of_range..top_of_range).select(&:is_possible_password_2?)
 puts "Number of possible passwords (part 2): #{possible_passwords_2.size}"
