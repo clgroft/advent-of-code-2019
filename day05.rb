@@ -17,7 +17,7 @@ class Intcode
   def run_program(&proc)
     @pc = 0
     loop do
-      opcode = get_register(@pc) % 100
+      opcode = get_opcode
       case opcode
       when 99
         return
@@ -27,6 +27,10 @@ class Intcode
         send $INSTRUCTIONS_FROM_OPCODES[opcode]
       end
     end
+  end
+
+  def get_opcode
+    @memory[@pc] % 100
   end
 
   $INSTRUCTIONS_FROM_OPCODES = {
@@ -93,11 +97,11 @@ class Intcode
   end
 
   def get_value(offset)
-    contents = get_register(@pc + offset)
+    contents = @memory[@pc + offset]
 
     case parameter_mode(offset)
     when ParameterModes::POSITION
-      get_register(contents)
+      @memory[contents]
     when ParameterModes::IMMEDIATE
       contents
     else
@@ -107,19 +111,11 @@ class Intcode
   end
 
   def set_value(offset, value)
-    set_register(get_register(@pc + offset), value)
-  end
-
-  def get_register(register)
-    @memory[register]
-  end
-
-  def set_register(register, value)
-    @memory[register] = value
+    @memory[@memory[@pc + offset]] = value
   end
 
   def parameter_mode(offset)
-    (get_register(@pc) / (10 ** (offset + 1))) % 10
+    (@memory[@pc] / (10 ** (offset + 1))) % 10
   end
 end
 
