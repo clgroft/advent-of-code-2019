@@ -3,10 +3,40 @@ module ParameterModes
   IMMEDIATE = 1
 end
 
+class RegisterMemory
+
+  def initialize(memory)
+    @memory = memory
+  end
+
+  def opcode(pc)
+    @memory[pc] % 100
+  end
+
+  def get_value(pc, offset)
+    contents = @memory[pc + offset]
+
+    case parameter_mode(pc, offset)
+    when ParameterModes::POSITION
+      @memory[contents]
+    when ParameterModes::IMMEDIATE
+      contents
+    else
+      puts "Error: invalid mode at PC = #{pc}, offset = #{offset}"
+      exit 1
+    end
+  end
+
+  def parameter_mode(pc, offset)
+    (@memory[pc] / (10 ** (offset + 1))) % 10
+  end
+end
+
 class Intcode
 
   def initialize(initial_memory)
     @memory = initial_memory.dup
+    @register_memory = RegisterMemory.new(@memory)
     @input = []
   end
 
@@ -17,7 +47,7 @@ class Intcode
   def run_program(&proc)
     @pc = 0
     loop do
-      opcode = get_opcode
+      opcode = @register_memory.opcode(@pc)
       case opcode
       when 99
         return
@@ -27,10 +57,6 @@ class Intcode
         send $INSTRUCTIONS_FROM_OPCODES[opcode]
       end
     end
-  end
-
-  def get_opcode
-    @memory[@pc] % 100
   end
 
   $INSTRUCTIONS_FROM_OPCODES = {
@@ -46,12 +72,12 @@ class Intcode
   }
 
   def add
-    set_value(3, get_value(1) + get_value(2))
+    set_value(3, @register_memory.get_value(@pc, 1) + @register_memory.get_value(@pc, 2))
     @pc += 4
   end
 
   def mult
-    set_value(3, get_value(1) * get_value(2))
+    set_value(3, @register_memory.get_value(@pc, 1) * @register_memory.get_value(@pc, 2))
     @pc += 4
   end
 
@@ -66,48 +92,34 @@ class Intcode
   end
 
   def write(proc)
-    proc.call(get_value(1))
+    proc.call(@register_memory.get_value(@pc, 1))
     @pc += 2
   end
 
   def jump_if_true
-    if get_value(1) != 0
-      @pc = get_value(2)
+    if @register_memory.get_value(@pc, 1) != 0
+      @pc = @register_memory.get_value(@pc, 2)
     else
       @pc += 3
     end
   end
 
   def jump_if_false
-    if get_value(1) == 0
-      @pc = get_value(2)
+    if @register_memory.get_value(@pc, 1) == 0
+      @pc = @register_memory.get_value(@pc, 2)
     else
       @pc += 3
     end
   end
 
   def less_than
-    set_value(3, get_value(1) < get_value(2) ? 1 : 0)
+    set_value(3, @register_memory.get_value(@pc, 1) < @register_memory.get_value(@pc, 2) ? 1 : 0)
     @pc += 4
   end
 
   def equals
-    set_value(3, get_value(1) == get_value(2) ? 1 : 0)
+    set_value(3, @register_memory.get_value(@pc, 1) == @register_memory.get_value(@pc, 2) ? 1 : 0)
     @pc += 4
-  end
-
-  def get_value(offset)
-    contents = @memory[@pc + offset]
-
-    case parameter_mode(offset)
-    when ParameterModes::POSITION
-      @memory[contents]
-    when ParameterModes::IMMEDIATE
-      contents
-    else
-      puts "Error: invalid mode at PC = #{@pc}, offset = #{offset}"
-      exit 1
-    end
   end
 
   def set_value(offset, value)
