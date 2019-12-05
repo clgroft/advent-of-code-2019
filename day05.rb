@@ -1,13 +1,19 @@
+module Opcodes
+  HALT = 99
+
+  ADD = 1
+  MULT = 2
+
+  READ = 3
+  WRITE = 4
+end
+
+module ParameterModes
+  POSITION = 0
+  IMMEDIATE = 1
+end
+
 class Intcode
-
-  HALT_OPCODE = 99
-  ADD_OPCODE = 1
-  MULT_OPCODE = 2
-  READ_OPCODE = 3
-  WRITE_OPCODE = 4
-
-  POSITION_MODE = 0
-  IMMEDIATE_MODE = 1
 
   def initialize(initial_memory)
     @memory = initial_memory.dup
@@ -30,10 +36,12 @@ class Intcode
     contents = get_register(@pc + offset)
 
     case parameter_mode(offset)
-    when POSITION_MODE
+    when ParameterModes::POSITION
       get_register(contents)
-    when IMMEDIATE_MODE
+
+    when ParameterModes::IMMEDIATE
       contents
+
     else
       puts "Error: invalid mode at PC = #{@pc}, offset = #{offset}"
       exit 1
@@ -57,18 +65,18 @@ class Intcode
     loop do
       opcode = get_register(@pc) % 100
       case opcode
-      when HALT_OPCODE
+      when Opcodes::HALT
         return
 
-      when ADD_OPCODE
+      when Opcodes::ADD
         set_value(3, get_value(1) + get_value(2))
         @pc += 4
 
-      when MULT_OPCODE
+      when Opcodes::MULT
         set_value(3, get_value(1) * get_value(2))
         @pc += 4
 
-      when READ_OPCODE
+      when Opcodes::READ
         input = take_input
         unless input
           puts "Error: no input available"
@@ -77,7 +85,7 @@ class Intcode
         set_value(1, input)
         @pc += 2
 
-      when WRITE_OPCODE
+      when Opcodes::WRITE
         yield get_value(1)
         @pc += 2
 
