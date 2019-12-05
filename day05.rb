@@ -3,7 +3,7 @@ module ParameterModes
   IMMEDIATE = 1
 end
 
-class RegisterMemory
+class InternalState
 
   def initialize(memory)
     @memory = memory
@@ -14,7 +14,7 @@ class RegisterMemory
     @memory[@pc] % 100
   end
 
-  def get_value(offset)
+  def get_from_offset(offset)
     contents = @memory[@pc + offset]
 
     case parameter_mode(offset)
@@ -28,20 +28,16 @@ class RegisterMemory
     end
   end
 
-  def set_value(offset, value)
+  def set_to_offset(offset, value)
     @memory[@memory[@pc + offset]] = value
   end
 
-  def increment_pc(inc)
+  def advance_pc(inc)
     @pc += inc
   end
 
   def jump_to_offset(offset)
-    @pc = get_value(offset)
-  end
-
-  def set_pc(new_pc)
-    @pc = new_pc
+    @pc = get_from_offset(offset)
   end
 
   def parameter_mode(offset)
@@ -52,8 +48,7 @@ end
 class Intcode
 
   def initialize(initial_memory)
-    @memory = initial_memory.dup
-    @register_memory = RegisterMemory.new(@memory)
+    @state = InternalState.new(initial_memory.dup)
     @input = []
   end
 
@@ -63,7 +58,7 @@ class Intcode
 
   def run_program(&proc)
     loop do
-      opcode = @register_memory.opcode
+      opcode = @state.opcode
       case opcode
       when 99
         return
@@ -88,13 +83,13 @@ class Intcode
   }
 
   def add
-    @register_memory.set_value(3, @register_memory.get_value(1) + @register_memory.get_value(2))
-    @register_memory.increment_pc(4)
+    @state.set_to_offset(3, @state.get_from_offset(1) + @state.get_from_offset(2))
+    @state.advance_pc(4)
   end
 
   def mult
-    @register_memory.set_value(3, @register_memory.get_value(1) * @register_memory.get_value(2))
-    @register_memory.increment_pc(4)
+    @state.set_to_offset(3, @state.get_from_offset(1) * @state.get_from_offset(2))
+    @state.advance_pc(4)
   end
 
   def read
@@ -103,39 +98,39 @@ class Intcode
       puts "Error: no input available"
       exit 1
     end
-    @register_memory.set_value(1, input)
-    @register_memory.increment_pc(2)
+    @state.set_to_offset(1, input)
+    @state.advance_pc(2)
   end
 
   def write(proc)
-    proc.call(@register_memory.get_value(1))
-    @register_memory.increment_pc(2)
+    proc.call(@state.get_from_offset(1))
+    @state.advance_pc(2)
   end
 
   def jump_if_true
-    if @register_memory.get_value(1) != 0
-      @register_memory.jump_to_offset(2)
+    if @state.get_from_offset(1) != 0
+      @state.jump_to_offset(2)
     else
-      @register_memory.increment_pc(3)
+      @state.advance_pc(3)
     end
   end
 
   def jump_if_false
-    if @register_memory.get_value(1) == 0
-      @register_memory.jump_to_offset(2)
+    if @state.get_from_offset(1) == 0
+      @state.jump_to_offset(2)
     else
-      @register_memory.increment_pc(3)
+      @state.advance_pc(3)
     end
   end
 
   def less_than
-    @register_memory.set_value(3, @register_memory.get_value(1) < @register_memory.get_value(2) ? 1 : 0)
-    @register_memory.increment_pc(4)
+    @state.set_to_offset(3, @state.get_from_offset(1) < @state.get_from_offset(2) ? 1 : 0)
+    @state.advance_pc(4)
   end
 
   def equals
-    @register_memory.set_value(3, @register_memory.get_value(1) == @register_memory.get_value(2) ? 1 : 0)
-    @register_memory.increment_pc(4)
+    @state.set_to_offset(3, @state.get_from_offset(1) == @state.get_from_offset(2) ? 1 : 0)
+    @state.advance_pc(4)
   end
 end
 
