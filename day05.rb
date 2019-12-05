@@ -6,6 +6,12 @@ module Opcodes
 
   READ = 3
   WRITE = 4
+
+  JUMP_IF_TRUE = 5
+  JUMP_IF_FALSE = 6
+
+  LESS_THAN = 7
+  EQUALS = 8
 end
 
 module ParameterModes
@@ -89,6 +95,28 @@ class Intcode
         yield get_value(1)
         @pc += 2
 
+      when Opcodes::JUMP_IF_TRUE
+        if get_value(1) != 0
+          @pc = get_value(2)
+        else
+          @pc += 3
+        end
+
+      when Opcodes::JUMP_IF_FALSE
+        if get_value(1) == 0
+          @pc = get_value(2)
+        else
+          @pc += 3
+        end
+
+      when Opcodes::LESS_THAN
+        set_value(3, get_value(1) < get_value(2) ? 1 : 0)
+        @pc += 4
+
+      when Opcodes::EQUALS
+        set_value(3, get_value(1) == get_value(2) ? 1 : 0)
+        @pc += 4
+
       else
         puts "Error: #{opcode} is not a valid opcode"
         exit 1
@@ -98,8 +126,11 @@ class Intcode
   end
 end
 
+input = ARGV.shift.to_i
 initial_memory = gets.split(",").map(&:to_i)
+
 computer = Intcode.new(initial_memory)
-computer.add_input(1)
+computer.add_input(input)
+
 computer.run_program { |n| puts "Output: #{n}" }
 
