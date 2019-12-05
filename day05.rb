@@ -1,6 +1,7 @@
 class Intcode
   def initialize(initial_memory)
     @memory = initial_memory.dup
+    @input = []
   end
 
   def get_register(register)
@@ -11,49 +12,50 @@ class Intcode
     @memory[register] = value
   end
 
+  def add_input(new_input)
+    @input.push(new_input)
+  end
+
+  def take_input
+    @input.shift
+  end
+
   def run_program
-    pc = 0
+    @pc = 0
     loop do
-      opcode = get_register(pc)
+      opcode = get_register(@pc)
       case opcode
       when 99
         return
+
       when 1
         set_register(
-          get_register(pc + 3),
-          get_register(get_register(pc + 1)) + get_register(get_register(pc + 2)))
-        pc += 4
+          get_register(@pc + 3),
+          get_register(get_register(@pc + 1)) + get_register(get_register(@pc + 2)))
+        @pc += 4
+
       when 2
         set_register(
-          get_register(pc + 3),
-          get_register(get_register(pc + 1)) * get_register(get_register(pc + 2)))
-        pc += 4
+          get_register(@pc + 3),
+          get_register(get_register(@pc + 1)) * get_register(get_register(@pc + 2)))
+        @pc += 4
+
+      when 3
+        input = take_input
+        puts "Error: no input available" and exit 1 unless input
+        set_register(get_register(@pc + 1), input)
+        @pc += 2
+
+      when 4
+        yield get_register(@pc + 1)
+        @pc += 2
+
       else
         puts "Error: #{opcode} is not a valid opcode"
+        exit 1
+
       end
     end
-  end
-end
-
-def run_program(initial_memory, noun, verb)
-  memory = initial_memory.dup
-  memory[1] = noun
-  memory[2] = verb
-
-  pc = 0
-  loop do
-    case memory[pc]
-    when 1
-      memory[memory[pc+3]] = memory[memory[pc+1]] + memory[memory[pc+2]]
-    when 2
-      memory[memory[pc+3]] = memory[memory[pc+1]] * memory[memory[pc+2]]
-    when 99
-      return memory[0]
-    else
-      puts "Error: memory[pc] = #{memory[pc]} is not a valid opcode"
-      exit 1
-    end
-    pc += 4
   end
 end
 
