@@ -7,32 +7,45 @@ class RegisterMemory
 
   def initialize(memory)
     @memory = memory
+    @pc = 0
   end
 
-  def opcode(pc)
-    @memory[pc] % 100
+  def opcode
+    @memory[@pc] % 100
   end
 
-  def get_value(pc, offset)
-    contents = @memory[pc + offset]
+  def get_value(offset)
+    contents = @memory[@pc + offset]
 
-    case parameter_mode(pc, offset)
+    case parameter_mode(offset)
     when ParameterModes::POSITION
       @memory[contents]
     when ParameterModes::IMMEDIATE
       contents
     else
-      puts "Error: invalid mode at PC = #{pc}, offset = #{offset}"
+      puts "Error: invalid mode at PC = #{@pc}, offset = #{offset}"
       exit 1
     end
   end
 
-  def set_value(pc, offset, value)
-    @memory[@memory[pc + offset]] = value
+  def set_value(offset, value)
+    @memory[@memory[@pc + offset]] = value
   end
 
-  def parameter_mode(pc, offset)
-    (@memory[pc] / (10 ** (offset + 1))) % 10
+  def increment_pc(inc)
+    @pc += inc
+  end
+
+  def jump_to_offset(offset)
+    @pc = get_value(offset)
+  end
+
+  def set_pc(new_pc)
+    @pc = new_pc
+  end
+
+  def parameter_mode(offset)
+    (@memory[@pc] / (10 ** (offset + 1))) % 10
   end
 end
 
@@ -49,9 +62,8 @@ class Intcode
   end
 
   def run_program(&proc)
-    @pc = 0
     loop do
-      opcode = @register_memory.opcode(@pc)
+      opcode = @register_memory.opcode
       case opcode
       when 99
         return
@@ -76,13 +88,13 @@ class Intcode
   }
 
   def add
-    @register_memory.set_value(@pc, 3, @register_memory.get_value(@pc, 1) + @register_memory.get_value(@pc, 2))
-    @pc += 4
+    @register_memory.set_value(3, @register_memory.get_value(1) + @register_memory.get_value(2))
+    @register_memory.increment_pc(4)
   end
 
   def mult
-    @register_memory.set_value(@pc, 3, @register_memory.get_value(@pc, 1) * @register_memory.get_value(@pc, 2))
-    @pc += 4
+    @register_memory.set_value(3, @register_memory.get_value(1) * @register_memory.get_value(2))
+    @register_memory.increment_pc(4)
   end
 
   def read
@@ -91,43 +103,39 @@ class Intcode
       puts "Error: no input available"
       exit 1
     end
-    @register_memory.set_value(@pc, 1, input)
-    @pc += 2
+    @register_memory.set_value(1, input)
+    @register_memory.increment_pc(2)
   end
 
   def write(proc)
-    proc.call(@register_memory.get_value(@pc, 1))
-    @pc += 2
+    proc.call(@register_memory.get_value(1))
+    @register_memory.increment_pc(2)
   end
 
   def jump_if_true
-    if @register_memory.get_value(@pc, 1) != 0
-      @pc = @register_memory.get_value(@pc, 2)
+    if @register_memory.get_value(1) != 0
+      @register_memory.jump_to_offset(2)
     else
-      @pc += 3
+      @register_memory.increment_pc(3)
     end
   end
 
   def jump_if_false
-    if @register_memory.get_value(@pc, 1) == 0
-      @pc = @register_memory.get_value(@pc, 2)
+    if @register_memory.get_value(1) == 0
+      @register_memory.jump_to_offset(2)
     else
-      @pc += 3
+      @register_memory.increment_pc(3)
     end
   end
 
   def less_than
-    @register_memory.set_value(@pc, 3, @register_memory.get_value(@pc, 1) < @register_memory.get_value(@pc, 2) ? 1 : 0)
-    @pc += 4
+    @register_memory.set_value(3, @register_memory.get_value(1) < @register_memory.get_value(2) ? 1 : 0)
+    @register_memory.increment_pc(4)
   end
 
   def equals
-    @register_memory.set_value(@pc, 3, @register_memory.get_value(@pc, 1) == @register_memory.get_value(@pc, 2) ? 1 : 0)
-    @pc += 4
-  end
-
-  def parameter_mode(offset)
-    (@memory[@pc] / (10 ** (offset + 1))) % 10
+    @register_memory.set_value(3, @register_memory.get_value(1) == @register_memory.get_value(2) ? 1 : 0)
+    @register_memory.increment_pc(4)
   end
 end
 
