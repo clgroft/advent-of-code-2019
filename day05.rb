@@ -27,6 +27,10 @@ class RegisterMemory
     end
   end
 
+  def set_value(pc, offset, value)
+    @memory[@memory[pc + offset]] = value
+  end
+
   def parameter_mode(pc, offset)
     (@memory[pc] / (10 ** (offset + 1))) % 10
   end
@@ -72,12 +76,12 @@ class Intcode
   }
 
   def add
-    set_value(3, @register_memory.get_value(@pc, 1) + @register_memory.get_value(@pc, 2))
+    @register_memory.set_value(@pc, 3, @register_memory.get_value(@pc, 1) + @register_memory.get_value(@pc, 2))
     @pc += 4
   end
 
   def mult
-    set_value(3, @register_memory.get_value(@pc, 1) * @register_memory.get_value(@pc, 2))
+    @register_memory.set_value(@pc, 3, @register_memory.get_value(@pc, 1) * @register_memory.get_value(@pc, 2))
     @pc += 4
   end
 
@@ -87,7 +91,7 @@ class Intcode
       puts "Error: no input available"
       exit 1
     end
-    set_value(1, input)
+    @register_memory.set_value(@pc, 1, input)
     @pc += 2
   end
 
@@ -113,17 +117,13 @@ class Intcode
   end
 
   def less_than
-    set_value(3, @register_memory.get_value(@pc, 1) < @register_memory.get_value(@pc, 2) ? 1 : 0)
+    @register_memory.set_value(@pc, 3, @register_memory.get_value(@pc, 1) < @register_memory.get_value(@pc, 2) ? 1 : 0)
     @pc += 4
   end
 
   def equals
-    set_value(3, @register_memory.get_value(@pc, 1) == @register_memory.get_value(@pc, 2) ? 1 : 0)
+    @register_memory.set_value(@pc, 3, @register_memory.get_value(@pc, 1) == @register_memory.get_value(@pc, 2) ? 1 : 0)
     @pc += 4
-  end
-
-  def set_value(offset, value)
-    @memory[@memory[@pc + offset]] = value
   end
 
   def parameter_mode(offset)
