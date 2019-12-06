@@ -1,43 +1,68 @@
-$direct_orbits = Hash.new { |h, k| h[k] = [] }
-orbit_com = {}
+class OrbitTreeFromRoot
+  def initialize
+    @satellites = Hash.new { |h, k| h[k] = [] }
+  end
+
+  def add_satellite(center, satellite)
+    @satellites[center].push(satellite)
+  end
+
+  def total_orbits
+    @orbit_count = 0
+    orbit_count_dfs("COM", 0)
+    @orbit_count
+  end
+
+  def orbit_count_dfs(object, length_to_com)
+    @orbit_count += length_to_com
+    if @satellites.has_key?(object)
+      sat_length_to_com = length_to_com + 1
+      @satellites[object].each { |sat| orbit_count_dfs(sat, sat_length_to_com) }
+    end
+  end
+end
+
+class OrbitTreeToRoot
+  def initialize
+    @orbit_centers = {}
+  end
+
+  def add_satellite(center, satellite)
+    @orbit_centers[satellite] = center
+  end
+
+  def transfer_distance(source, dest)
+    source_orbit_distances = {}
+    source_object_to_com = @orbit_centers[source]
+    steps = 0
+    while source_object_to_com
+      source_orbit_distances[source_object_to_com] = steps
+      source_object_to_com = @orbit_centers[source_object_to_com]
+      steps += 1
+    end
+
+    dest_object_to_com = @orbit_centers[dest]
+    steps = 0
+    while dest_object_to_com
+      if source_orbit_distances.has_key?(dest_object_to_com)
+        return steps + source_orbit_distances[dest_object_to_com]
+      end
+      dest_object_to_com = @orbit_centers[dest_object_to_com]
+      steps += 1
+    end
+
+    nil
+  end
+end
+
+orbit_tree_from_root = OrbitTreeFromRoot.new
+orbit_tree_to_root = OrbitTreeToRoot.new
 ARGF.each_line do |line|
-  center, orbiting = line.strip.split(')')
-  $direct_orbits[center].push(orbiting)
-  orbit_com[orbiting] = center
+  center, satellite = line.strip.split(')')
+  orbit_tree_from_root.add_satellite(center, satellite)
+  orbit_tree_to_root.add_satellite(center, satellite)
 end
 
-$total_orbits = 0
-def dfs(center, tail_length)
-  $total_orbits += tail_length
-  # puts "Total orbits at #{center}: #{$total_orbits}"
-
-  # Avoid making lots of extraneous arrays
-  if $direct_orbits.has_key?(center)
-    orbiting_objects = $direct_orbits[center]
-    # puts "#{center} => #{orbiting_objects}"
-    orbiting_objects.each { |object| dfs(object, tail_length + 1) }
-  end
-end
-dfs("COM", 0)
-puts "Total number of orbits: #{$total_orbits}"
-
-you_orbits = {}
-curr_object = orbit_com["YOU"]
-steps = 0
-while curr_object
-  you_orbits[curr_object] = steps
-  curr_object = orbit_com[curr_object]
-  steps += 1
-end
-
-curr_object = orbit_com["SAN"]
-steps = 0
-loop do
-  if you_orbits.has_key?(curr_object)
-    puts "Total steps: #{steps + you_orbits[curr_object]}"
-    break
-  end
-  curr_object = orbit_com[curr_object]
-  steps += 1
-end
+puts "Total number of orbits: #{orbit_tree_from_root.total_orbits}"
+puts "Total steps from YOU to SAN: #{orbit_tree_to_root.transfer_distance("YOU", "SAN")}"
 
