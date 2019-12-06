@@ -72,9 +72,7 @@ class OrbitTree
 end
 
 orbit_tree = OrbitTree.new
-ARGF.each_line do |line|
-  orbit_tree.add_satellite(*line.strip.split(')'))
-end
+ARGF.each_line { |line| orbit_tree.add_satellite(*line.strip.split(')')) }
 
 puts "Total number of orbits: #{orbit_tree.total_orbits}"
 puts "Total steps from YOU to SAN: #{orbit_tree.transfer_distance("YOU", "SAN")}"
