@@ -33,25 +33,22 @@ class OrbitTreeToRoot
 
   def transfer_distance(source, dest)
     source_orbit_distances = {}
-    source_object_to_com = @orbit_centers[source]
-    steps = 0
-    while source_object_to_com
-      source_orbit_distances[source_object_to_com] = steps
-      source_object_to_com = @orbit_centers[source_object_to_com]
-      steps += 1
+    each_object_to_com(source) { |object, steps| source_orbit_distances[object] = steps }
+    each_object_to_com(dest) do |object, steps|
+      source_steps = source_orbit_distances[object]
+      return steps + source_steps if source_steps
     end
-
-    dest_object_to_com = @orbit_centers[dest]
-    steps = 0
-    while dest_object_to_com
-      if source_orbit_distances.has_key?(dest_object_to_com)
-        return steps + source_orbit_distances[dest_object_to_com]
-      end
-      dest_object_to_com = @orbit_centers[dest_object_to_com]
-      steps += 1
-    end
-
     nil
+  end
+
+  def each_object_to_com(source)
+    object = @orbit_centers[source]
+    steps = 0
+    while object
+      yield object, steps
+      object = @orbit_centers[object]
+      steps += 1
+    end
   end
 end
 
