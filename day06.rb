@@ -52,14 +52,14 @@ class OrbitTreeToRoot
   end
 end
 
-orbit_tree_from_root = OrbitTreeFromRoot.new
-orbit_tree_to_root = OrbitTreeToRoot.new
+from_root = OrbitTreeFromRoot.new
+to_root = OrbitTreeToRoot.new
 ARGF.each_line do |line|
   center, satellite = line.strip.split(')')
-  orbit_tree_from_root.add_satellite(center, satellite)
-  orbit_tree_to_root.add_satellite(center, satellite)
+  from_root.add_satellite(center, satellite)
+  to_root.add_satellite(center, satellite)
 end
 
-puts "Total number of orbits: #{orbit_tree_from_root.total_orbits}"
-puts "Total steps from YOU to SAN: #{orbit_tree_to_root.transfer_distance("YOU", "SAN")}"
+puts "Total number of orbits: #{from_root.total_orbits}"
+puts "Total steps from YOU to SAN: #{to_root.transfer_distance("YOU", "SAN")}"
 
