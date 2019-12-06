@@ -1,5 +1,3 @@
-require 'forwardable'
-
 class OrbitTreeFromRoot
   def initialize
     @satellites = Hash.new { |h, k| h[k] = [] }
@@ -54,26 +52,14 @@ class OrbitTreeToRoot
   end
 end
 
-class OrbitTree
-  extend Forwardable
-
-  def_delegators :@from_root, :total_orbits
-  def_delegators :@to_root, :transfer_distance
-
-  def initialize
-    @from_root = OrbitTreeFromRoot.new
-    @to_root = OrbitTreeToRoot.new
-  end
-
-  def add_satellite(center, satellite)
-    @from_root.add_satellite(center, satellite)
-    @to_root.add_satellite(center, satellite)
-  end
+orbit_tree_from_root = OrbitTreeFromRoot.new
+orbit_tree_to_root = OrbitTreeToRoot.new
+ARGF.each_line do |line|
+  center, satellite = line.strip.split(')')
+  orbit_tree_from_root.add_satellite(center, satellite)
+  orbit_tree_to_root.add_satellite(center, satellite)
 end
 
-orbit_tree = OrbitTree.new
-ARGF.each_line { |line| orbit_tree.add_satellite(*line.strip.split(')')) }
-
-puts "Total number of orbits: #{orbit_tree.total_orbits}"
-puts "Total steps from YOU to SAN: #{orbit_tree.transfer_distance("YOU", "SAN")}"
+puts "Total number of orbits: #{orbit_tree_from_root.total_orbits}"
+puts "Total steps from YOU to SAN: #{orbit_tree_to_root.transfer_distance("YOU", "SAN")}"
 
