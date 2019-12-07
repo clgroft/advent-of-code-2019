@@ -25,13 +25,13 @@ def apply_amplifier(amp, input)
   output
 end
 
-def apply_all_amplifiers(amplifiers, input)
+def apply_all_amplifiers(amplifiers, input=0)
   amplifiers.inject(input) { |input, amp| apply_amplifier(amp, input) }
 end
 
-def iterate_all_amplifiers(amplifiers, input)
+def iterate_all_amplifiers(amplifiers)
   Enumerator.new do |y|
-    signal = input
+    signal = 0
     loop do
       y << signal
       signal = apply_all_amplifiers(amplifiers, signal)
@@ -45,23 +45,13 @@ end
 initial_memory = gets.split(",").map(&:to_i)
 
 max_signal = all_amplifier_chains(initial_memory, 0..4)
-  .map { |amplifiers| apply_all_amplifiers(amplifiers, 0) }
+  .map { |amplifiers| apply_all_amplifiers(amplifiers) }
   .max
 
 puts "Max thruster signal (no feedback): #{max_signal}"
 
 max_feedback_signal = all_amplifier_chains(initial_memory, 5..9)
-  .map do |amplifiers|
-    most_recent_signal = 0
-
-    loop do
-      new_signal = apply_all_amplifiers(amplifiers, most_recent_signal)
-      break unless new_signal
-      most_recent_signal = new_signal
-    end
-
-    most_recent_signal
-  end
+  .map { |amplifiers| iterate_all_amplifiers(amplifiers) }
   .max
 
 puts "Max thruster signal (with feedback): #{max_feedback_signal}"
