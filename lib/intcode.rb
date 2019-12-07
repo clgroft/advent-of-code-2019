@@ -79,10 +79,7 @@ class CPU
 
   def read
     input = @input.shift
-    unless input
-      puts "Error: no input available"
-      exit 1
-    end
+    throw :halt unless input # add_input and run_program to continue
     @state.set(1, input)
     @state.advance_pc(2)
   end
@@ -117,6 +114,10 @@ class CPU
     @state.set(3, @state.get(1) == @state.get(2) ? 1 : 0)
     @state.advance_pc(4)
   end
+
+  def halt
+    throw :halt
+  end
 end
 
 # The main abstraction for the machine.  Translates opcodes into instructions
@@ -133,15 +134,15 @@ class Intcode
   end
 
   def run_program(&proc)
-    loop do
-      opcode = @state.opcode
-      case opcode
-      when 99
-        return
-      when 4
-        @cpu.write(proc)
-      else
-        @cpu.send($INSTRUCTIONS_FROM_OPCODES[opcode])
+    catch :halt do
+      loop do
+        opcode = @state.opcode
+        case opcode
+        when 4
+          @cpu.write(proc)
+        else
+          @cpu.send($INSTRUCTIONS_FROM_OPCODES[opcode])
+        end
       end
     end
   end
@@ -155,7 +156,7 @@ class Intcode
     6 => :jump_if_false,
     7 => :less_than,
     8 => :equals,
-    # 99 = halt has custom handling
+    99 => :halt,
   }
 end
 
