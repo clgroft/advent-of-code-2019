@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 class OrbitTreeFromRoot
   def initialize
     @satellites = Hash.new { |h, k| h[k] = [] }

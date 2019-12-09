@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 def basic_fuel_cost(weight)
   weight / 3 - 2
 end

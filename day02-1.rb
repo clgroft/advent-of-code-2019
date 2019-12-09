@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 memory = gets.split(",").map(&:to_i)
 memory[1] = 12
 memory[2] = 2

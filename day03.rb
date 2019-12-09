@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 $moves = {
   "U" => ->(x, y) { return x, y+1 },
   "D" => ->(x, y) { return x, y-1 },

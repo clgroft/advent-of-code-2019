@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # array of layers as strings
 layer_strs = File.open("inputs/day08.txt") { |f| f.read.strip.scan(/.{150}/) }
 

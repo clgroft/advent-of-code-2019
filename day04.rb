@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 module Enumerable
   def sorted?
     each_cons(2).all? { |a, b| (a <=> b) <= 0 }

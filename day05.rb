@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require_relative 'lib/intcode'
 
 input = ARGV.shift.to_i

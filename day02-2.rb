@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 def run_program(initial_memory, noun, verb)
   memory = initial_memory.dup
   memory[1] = noun
