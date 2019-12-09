@@ -1,6 +1,27 @@
 module ParameterModes
   POSITION = 0
   IMMEDIATE = 1
+  RELATIVE = 2
+end
+
+# Stores memory contents.  With the new requirements on day 9 a simple array or
+# hash is no longer a good abstraction.
+class Memory
+
+  def initialize(memory_contents)
+    @memory = Hash.new(0)
+    memory_contents.each_with_index { |n, i| @memory[i] = n }
+  end
+
+  def [](index)
+    (puts "Negative index #{index}" and exit 1) if index < 0
+    @memory[index] || 0
+  end
+
+  def []=(index, value)
+    (puts "Negative index #{index}" and exit 1) if index < 0
+    @memory[index] = value
+  end
 end
 
 # Stores main memory and program counter.  Allows access to memory via offsets
@@ -9,8 +30,9 @@ end
 class InternalState
 
   def initialize(memory)
-    @memory = memory
+    @memory = Memory.new(memory)
     @pc = 0
+    @relative_base = 0
   end
 
   def opcode
@@ -28,6 +50,8 @@ class InternalState
       @memory[contents]
     when ParameterModes::IMMEDIATE
       contents
+    when ParameterModes::RELATIVE
+      @memory[contents + @relative_base]
     else
       puts "Error: invalid mode at PC = #{@pc}, offset = #{offset}"
       exit 1
@@ -37,7 +61,19 @@ class InternalState
   # In contrast to get, we always want to set at the position that our memory
   # location points to, not at the memory location itself.
   def set(offset, value)
-    @memory[@memory[@pc + offset]] = value
+    contents = @memory[@pc + offset]
+    case parameter_mode(offset)
+    when ParameterModes::POSITION
+      @memory[contents] = value
+    when ParameterModes::IMMEDIATE
+      puts "Error: cannot use immediate mode on set"
+      exit 1
+    when ParameterModes::RELATIVE
+      @memory[contents + @relative_base] = value
+    else
+      puts "Error: invalid mode at PC = #{@pc}, offset = #{offset}"
+      exit 1
+    end
   end
 
   # After an instruction, the program counter must always be advanced past the
@@ -48,6 +84,10 @@ class InternalState
 
   def jump(offset)
     @pc = get(offset)
+  end
+
+  def adjust_relative_base(adjustment)
+    @relative_base += adjustment
   end
 
   def parameter_mode(offset)
@@ -115,6 +155,11 @@ class CPU
     @state.advance_pc(4)
   end
 
+  def adjust_relative_base
+    @state.adjust_relative_base(@state.get(1))
+    @state.advance_pc(2)
+  end
+
   def halt
     throw :halt
   end
@@ -156,6 +201,7 @@ class Intcode
     6 => :jump_if_false,
     7 => :less_than,
     8 => :equals,
+    9 => :adjust_relative_base,
     99 => :halt,
   }
 end
