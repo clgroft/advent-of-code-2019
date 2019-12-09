@@ -8,19 +8,26 @@ end
 # hash is no longer a good abstraction.
 class Memory
 
-  def initialize(memory_contents)
+  def initialize(initial_memory)
     @memory = Hash.new(0)
-    memory_contents.each_with_index { |n, i| @memory[i] = n }
+    initial_memory.each_with_index { |n, i| @memory[i] = n }
   end
 
   def [](index)
-    (puts "Negative index #{index}" and exit 1) if index < 0
+    validate(index)
     @memory[index] || 0
   end
 
   def []=(index, value)
-    (puts "Negative index #{index}" and exit 1) if index < 0
+    validate(index)
     @memory[index] = value
+  end
+
+  def validate(index)
+    if index < 0
+      puts "Negative index #{index}"
+      exit 1
+    end
   end
 end
 
@@ -29,8 +36,8 @@ end
 # memory contents.
 class InternalState
 
-  def initialize(memory)
-    @memory = Memory.new(memory)
+  def initialize(initial_memory)
+    @memory = Memory.new(initial_memory)
     @pc = 0
     @relative_base = 0
   end
@@ -170,7 +177,7 @@ end
 class Intcode
 
   def initialize(initial_memory)
-    @state = InternalState.new(initial_memory.dup)
+    @state = InternalState.new(initial_memory)
     @cpu = CPU.new(@state)
   end
 
