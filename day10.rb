@@ -52,10 +52,9 @@ asteroid_queues = asteroids_from_base
   end
 
 asteroids_in_destruction_order = []
-loop do
-  new_asteroids = asteroid_queues.map(&:shift).reject(&:nil?)
-  break if new_asteroids.empty?
-  asteroids_in_destruction_order.concat(new_asteroids)
+until asteroid_queues.empty?
+  asteroids_in_destruction_order.concat(asteroid_queues.map(&:shift))
+  asteroid_queues = asteroid_queues.reject(&:empty?)
 end
 
 puts "200th asteroid destroyed is at coordinates #{asteroids_in_destruction_order[199]}"
