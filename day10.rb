@@ -36,14 +36,11 @@ asteroids_in_directions.each do |this, dirs|
     .each { |that| dirs[this.direction_to(that)] << that }
 end
 
-best_position, most_observable_asteroids =
-  asteroids_in_directions
-    .map { |p, dirs| [p, dirs.size] }
-    .max_by { |pair| pair[1] }
+best_position, asteroids_from_base =
+  asteroids_in_directions.max_by { |_pos, dirs| dirs.size }
 
-puts "Most observable asteroids: #{most_observable_asteroids}"
+puts "Most observable asteroids: #{asteroids_from_base.size}"
 
-asteroids_from_base = asteroids_in_directions[best_position]
 directions = asteroids_from_base.keys.to_a.sort_by(&:compass_heading)
 directions.each do |dir|
   asteroids_from_base[dir] =
