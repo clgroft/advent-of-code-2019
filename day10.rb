@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-require 'set'
-
 class Array
   def direction_to(other)
     delta_x = other[0] - self[0]
@@ -21,40 +19,44 @@ class Array
   end
 end
 
+
 asteroids_in_directions = {}
+# Set up keys (where are all the asteroids?)
 ARGF.each_line.each_with_index do |row, y|
   row.strip.chars
     .each_with_index
     .select { |char, _| char == "#" }
     .each { |_, x| asteroids_in_directions[[x, y]] = Hash.new { |h, k| h[k] = [] } }
 end
-
+# and values (what are their relative directions?)
 asteroids_in_directions.each do |this, dirs|
   asteroids_in_directions
     .keys
-    .select { |that| that != this }
+    .reject { |that| that == this }
     .each { |that| dirs[this.direction_to(that)] << that }
 end
 
+# For each direction from an asteroid that has at least one asteroid on it,
+# there is a unique closest (therefore visible) asteroid
 best_position, asteroids_from_base =
   asteroids_in_directions.max_by { |_pos, dirs| dirs.size }
 
 puts "Most observable asteroids: #{asteroids_from_base.size}"
 
-directions = asteroids_from_base.keys.to_a.sort_by(&:compass_heading)
-directions.each do |dir|
-  asteroids_from_base[dir] =
-    asteroids_from_base[dir].sort_by { |point| best_position.taxicab_distance_to(point) }
-end
+# We fire the laser in each direction, clockwise starting from vertical,
+# each time targeting the closest remaining asteroid
+asteroid_queues = asteroids_from_base
+  .sort_by { |direction, _asteroids| direction.compass_heading }
+  .map do |_direction, asteroids|
+    asteroids.sort_by { |point| best_position.taxicab_distance_to(point) }
+  end
 
-all_asteroids = []
+asteroids_in_destruction_order = []
 loop do
-  new_asteroids = directions
-    .map { |dir| asteroids_from_base[dir].shift }
-    .select { |asteroid| asteroid }
+  new_asteroids = asteroid_queues.map(&:shift).reject(&:nil?)
   break if new_asteroids.empty?
-  all_asteroids.concat(new_asteroids)
+  asteroids_in_destruction_order.concat(new_asteroids)
 end
 
-puts "200th asteroid is at coordinates #{all_asteroids[199]}"
+puts "200th asteroid destroyed is at coordinates #{asteroids_in_destruction_order[199]}"
 
