@@ -29,49 +29,44 @@ class HullPaintingRobot
 
   def paint_hull
     loop do
-      @intcode.add_input(get_color)
-      outputs = []
-      @intcode.run_program { |out| outputs << out }
-      case outputs.length
+      next_steps = get_next_steps
+      case next_steps.length
       when 0
         return
       when 2
-        color, rotate = outputs
-        set_color(color)
-        new_direction(rotate)
-        new_xy
+        process_next_steps(*next_steps)
       else
-        puts "Output #{outputs} should have length 0 or 2"
+        puts "Next steps #{next_steps} should have length 0 or 2"
         exit 1
       end
     end
   end
 
-  def number_cells_painted
-    @cells.size
+  private
+
+  def get_next_steps
+    @intcode.add_input(current_color)
+    outputs = []
+    @intcode.run_program { |out| outputs << out }
+    outputs
   end
 
-  def print_picture
-    x_min, x_max = @cells.keys.map { |x, _y| x }.minmax
-    y_min, y_max = @cells.keys.map { |_x, y| y }.minmax
-
-    (y_min..y_max).map do |y|
-      (x_min..x_max).map do |x|
-        @cells[[x,y]] == WHITE ? "*" : " "
-      end.join + "\n"
-    end.join
+  def process_next_steps(color, rotate_direction)
+    paint(color)
+    rotate(rotate_direction)
+    advance
   end
 
-  def get_color
+  def current_color
     @cells[[@x, @y]] || BLACK
   end
 
-  def set_color(color)
+  def paint(color)
     @cells[[@x, @y]] = color
   end
 
-  def new_direction(rotate)
-    case rotate
+  def rotate(rotate_direction)
+    case rotate_direction
     when COUNTERCLOCKWISE
       @direction = (@direction + 1) % 4
     when CLOCKWISE
@@ -82,7 +77,7 @@ class HullPaintingRobot
     end
   end
 
-  def new_xy
+  def advance
     case @direction
     when UP
       @y -= 1
@@ -96,6 +91,24 @@ class HullPaintingRobot
       puts "Illegal direction #{@direction}"
       exit 1
     end
+  end
+
+  public
+
+  def number_cells_painted
+    @cells.size
+  end
+
+  def print_picture
+    x_min, x_max = @cells.keys.map { |x, _y| x }.minmax
+    y_min, y_max = @cells.keys.map { |_x, y| y }.minmax
+    (y_min..y_max).map { |y| row(y, x_min, x_max) }.join
+  end
+
+  private
+
+  def row(y, x_min, x_max)
+    (x_min..x_max).map { |x| @cells[[x,y]] == WHITE ? "*" : " " }.join + "\n"
   end
 end
 
