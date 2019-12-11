@@ -3,15 +3,6 @@
 require_relative 'lib/intcode'
 
 
-def turn_counterclockwise(dir)
-  (dir + 1) % 4
-end
-
-def turn_clockwise(dir)
-  (dir + 3) % 4
-end
-
-
 class HullPaintingRobot
 
   BLACK = 0
