@@ -18,7 +18,7 @@ class HullPaintingRobot
 
   def initialize(program)
     @intcode = Intcode.new(program)
-    @cells = {}
+    @cells = Hash.new(BLACK)
     @x, @y = 0, 0
     @direction = UP
   end
@@ -58,7 +58,11 @@ class HullPaintingRobot
   end
 
   def current_color
-    @cells[[@x, @y]] || BLACK
+    get_color(@x, @y)
+  end
+
+  def get_color(x, y)
+    @cells[[x, y]]
   end
 
   def paint(color)
@@ -108,7 +112,7 @@ class HullPaintingRobot
   private
 
   def row(y, x_min, x_max)
-    (x_min..x_max).map { |x| @cells[[x,y]] == WHITE ? "*" : " " }.join + "\n"
+    (x_min..x_max).map { |x| get_color(x, y) == WHITE ? "*" : " " }.join + "\n"
   end
 end
 
