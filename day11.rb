@@ -29,6 +29,7 @@ class HullPaintingRobot
     @intcode = Intcode.new(program)
     @cells = {}
     @x, @y = 0, 0
+    @direction = UP
   end
 
   def start_on_white
@@ -36,8 +37,6 @@ class HullPaintingRobot
   end
 
   def paint_hull
-    direction = UP
-
     loop do
       @intcode.add_input(get_color)
       outputs = []
@@ -48,8 +47,8 @@ class HullPaintingRobot
       when 2
         color, rotate = outputs
         set_color(color)
-        direction = new_direction(direction, rotate)
-        new_xy(direction)
+        new_direction(rotate)
+        new_xy
       else
         puts "Output #{outputs} should have length 0 or 2"
         exit 1
@@ -80,20 +79,20 @@ class HullPaintingRobot
     @cells[[@x, @y]] = color
   end
 
-  def new_direction(direction, rotate)
+  def new_direction(rotate)
     case rotate
     when COUNTERCLOCKWISE
-      turn_counterclockwise(direction)
+      @direction = (@direction + 1) % 4
     when CLOCKWISE
-      turn_clockwise(direction)
+      @direction = (@direction + 3) % 4
     else
       puts "Illegal rotate direction #{rotate}"
       exit 1
     end
   end
 
-  def new_xy(direction)
-    case direction
+  def new_xy
+    case @direction
     when UP
       @y -= 1
     when LEFT
@@ -103,7 +102,7 @@ class HullPaintingRobot
     when RIGHT
       @x += 1
     else
-      puts "Illegal direction #{direction}"
+      puts "Illegal direction #{@direction}"
       exit 1
     end
   end
