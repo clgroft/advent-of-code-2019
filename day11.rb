@@ -3,23 +3,6 @@
 require_relative 'lib/intcode'
 
 
-class Color
-  BLACK = 0
-  WHITE = 1
-end
-
-class Direction
-  UP = 0
-  LEFT = 1
-  DOWN = 2
-  RIGHT = 3
-end
-
-class RotateDirection
-  COUNTERCLOCKWISE = 0
-  CLOCKWISE = 1
-end
-
 def turn_counterclockwise(dir)
   (dir + 1) % 4
 end
@@ -31,18 +14,29 @@ end
 
 class HullPaintingRobot
 
+  BLACK = 0
+  WHITE = 1
+
+  UP = 0
+  LEFT = 1
+  DOWN = 2
+  RIGHT = 3
+
+  COUNTERCLOCKWISE = 0
+  CLOCKWISE = 1
+
   def initialize(program)
     @intcode = Intcode.new(program)
     @cells = {}
   end
 
   def start_on_white
-    @cells[[0,0]] = Color::WHITE
+    @cells[[0,0]] = WHITE
   end
 
   def paint_hull
     x, y = 0, 0
-    direction = Direction::UP
+    direction = UP
 
     loop do
       @intcode.add_input(get_color(x, y))
@@ -73,13 +67,13 @@ class HullPaintingRobot
 
     (y_min..y_max).map do |y|
       (x_min..x_max).map do |x|
-        @cells[[x,y]] == Color::WHITE ? "*" : " "
+        @cells[[x,y]] == WHITE ? "*" : " "
       end.join + "\n"
     end.join
   end
 
   def get_color(x, y)
-    @cells[[x,y]] || Color::BLACK
+    @cells[[x,y]] || BLACK
   end
 
   def set_color(x, y, color)
@@ -88,9 +82,9 @@ class HullPaintingRobot
 
   def new_direction(direction, rotate)
     case rotate
-    when RotateDirection::COUNTERCLOCKWISE
+    when COUNTERCLOCKWISE
       turn_counterclockwise(direction)
-    when RotateDirection::CLOCKWISE
+    when CLOCKWISE
       turn_clockwise(direction)
     else
       puts "Illegal rotate direction #{rotate}"
@@ -100,13 +94,13 @@ class HullPaintingRobot
 
   def new_xy(x, y, direction)
     case direction
-    when Direction::UP
+    when UP
       [x, y-1]
-    when Direction::LEFT
+    when LEFT
       [x-1, y]
-    when Direction::DOWN
+    when DOWN
       [x, y+1]
-    when Direction::RIGHT
+    when RIGHT
       [x+1, y]
     else
       puts "Illegal direction #{direction}"
