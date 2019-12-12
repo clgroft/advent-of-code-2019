@@ -37,11 +37,15 @@ class Moon
   def kinetic_energy
     sum_of_magnitudes(vel)
   end
+
+  def state_by_axis
+    pos.zip(vel)
+  end
 end
 
 
 def capture_moon_state_by_axis(moons)
-  moons.map { |m| m.pos.zip(m.vel) }.transpose
+  moons.map(&:state_by_axis).transpose
 end
 
 
