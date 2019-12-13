@@ -199,6 +199,10 @@ class Intcode
     end
   end
 
+  def is_halted
+    @state.opcode == 99
+  end
+
   $INSTRUCTIONS_FROM_OPCODES = {
     1 => :add,
     2 => :mult,
