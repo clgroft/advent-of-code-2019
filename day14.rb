@@ -1,49 +1,42 @@
 #!/usr/bin/env ruby
 
-class Miner
-  attr_reader :ore_mined
 
-  def initialize(fundamentals)
-    @fundamentals = fundamentals
+class Miner
+  def initialize(reactions)
+    @reactions = reactions
   end
 
-  def mine_for_fuel(count=1)
+  def ore_for_fuel(count=1)
     @ore_mined = 0
     @surpluses = Hash.new(0)
-    mine_for("FUEL", count)
+    consume("FUEL", count)
     @ore_mined
   end
 
-  def mine_for(chemical, count)
+  private
+
+  def consume(chemical, count)
     if chemical == "ORE"
       @ore_mined += count
-      return
-    end
-
-    count = check_for_surplus(chemical,count)
-    return if count == 0
-    produce(chemical, count)
-  end
-
-  def check_for_surplus(chemical, count)
-    current_surplus = @surpluses[chemical]
-    if current_surplus > count
+    else
+      units_to_produce = count - @surpluses[chemical]
+      produce_at_least(chemical, units_to_produce) if units_to_produce > 0
       @surpluses[chemical] -= count
-      return 0
     end
-    @surpluses.delete(chemical)
-    return count - current_surplus
   end
 
-  def produce(chemical, count)
-    chemical_info = @fundamentals[chemical]
-    multiplier = (count.to_f / chemical_info[:produced]).ceil
-    chemical_info[:recipe].each { |ingredient, ing_count| mine_for(ingredient, ing_count * multiplier) }
-    @surpluses[chemical] = chemical_info[:produced] * multiplier - count
+  def produce_at_least(chemical, count)
+    chemical_info = @reactions[chemical]
+    reaction_count = (count.to_f / chemical_info[:produced]).ceil
+    chemical_info[:recipe].each do |ingredient, ing_count|
+      consume(ingredient, ing_count * reaction_count)
+    end
+    @surpluses[chemical] += chemical_info[:produced] * reaction_count
   end
 end
 
-fundamentals = ARGF.each_line.map do |l|
+
+reactions = ARGF.each_line.map do |l|
   recipe, full_product = l.strip.split(" => ")
   product_amount, product = full_product.split(" ")
   product_amount = product_amount.to_i
@@ -53,24 +46,29 @@ fundamentals = ARGF.each_line.map do |l|
   end
   [product, {produced: product_amount, recipe: recipe}]
 end.to_h
+miner = Miner.new(reactions)
 
-miner = Miner.new(fundamentals)
-ore_needed = miner.mine_for_fuel
-puts "Total ore mined for 1 fuel: #{ore_needed} units"
+# Part 1: how much for one unit of fuel?
+ore_needed = miner.ore_for_fuel
+puts "One unit of fuel requires #{ore_needed} units of ore"
 
+# Part 2: how many units of fuel from 10**12 units of ore?
+# Binary search is fast enough here
+# (there are probably faster ways using better estimates)
 ONE_TRILLION = 10**12
-lower_limit_inclusive = ONE_TRILLION / ore_needed
-upper_limit_exclusive = lower_limit_inclusive * 2
-while miner.mine_for_fuel(upper_limit_exclusive) <= ONE_TRILLION
-  upper_limit_exclusive *= 2
-end
-while upper_limit_exclusive - lower_limit_inclusive > 1
-  test_value = (upper_limit_exclusive + lower_limit_inclusive) / 2
-  if miner.mine_for_fuel(test_value) <= ONE_TRILLION
-    lower_limit_inclusive = test_value
+
+min_inclusive = ONE_TRILLION / ore_needed
+max_exclusive = min_inclusive * 2
+max_exclusive *= 2 while miner.ore_for_fuel(max_exclusive) <= ONE_TRILLION
+
+while max_exclusive - min_inclusive > 1
+  test_value = (max_exclusive + min_inclusive) / 2
+  if miner.ore_for_fuel(test_value) <= ONE_TRILLION
+    min_inclusive = test_value
   else
-    upper_limit_exclusive = test_value
+    max_exclusive = test_value
   end
 end
 
-puts "With one trillion ore units, can produce #{lower_limit_inclusive} units of fuel"
+puts "One trillion units of ore can produce #{min_inclusive} units of fuel"
+
