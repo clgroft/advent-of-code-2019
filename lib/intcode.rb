@@ -9,8 +9,16 @@ end
 class Memory
 
   def initialize(initial_memory)
-    @memory = Hash.new(0)
-    initial_memory.each_with_index { |n, i| @memory[i] = n }
+    if initial_memory.instance_of?(Hash)
+      @memory = initial_memory
+    else
+      @memory = Hash.new(0)
+      initial_memory.each_with_index { |n, i| @memory[i] = n }
+    end
+  end
+
+  def dup
+    Memory.new(@memory.dup)
   end
 
   def [](index)
@@ -36,10 +44,14 @@ end
 # memory contents.
 class InternalState
 
-  def initialize(initial_memory)
-    @memory = Memory.new(initial_memory)
-    @pc = 0
-    @relative_base = 0
+  def initialize(initial_memory, pc = 0, relative_base = 0)
+    @memory = initial_memory.instance_of?(Memory) ? initial_memory : Memory.new(initial_memory)
+    @pc = pc
+    @relative_base = relative_base
+  end
+
+  def dup
+    InternalState.new(@memory.dup, @pc, @relative_base)
   end
 
   def opcode
@@ -177,8 +189,12 @@ end
 class Intcode
 
   def initialize(initial_memory)
-    @state = InternalState.new(initial_memory)
+    @state = initial_memory.instance_of?(InternalState) ? initial_memory : InternalState.new(initial_memory)
     @cpu = CPU.new(@state)
+  end
+
+  def dup
+    Intcode.new(@state.dup)
   end
 
   def add_input(new_input)
