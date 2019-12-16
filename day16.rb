@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 
 
+# Part 1
+# The FFT is almost but not quite a matrix multiplication,
+# so we have to do it the hard way.
 class FFT
   attr_reader :signal
 
@@ -35,21 +38,34 @@ class FFT
   end
 end
 
-
 num_iterations = ARGV.shift.to_i
 starting_signal = ARGF.read.strip.chars.map(&:to_i)
 fft = FFT.new(starting_signal)
 num_iterations.times { fft.apply_transform }
 puts fft.signal.take(8).join('')
 
-# long_starting_signal = 10000.times.map { starting_signal }.inject(&:concat)
-# long_fft = FFT.new(long_starting_signal)
-# offset = starting_signal.take(7).join('').to_i
-# long_fft.drop(offset)
-# num_iterations.times do |n|
-#   long_fft.apply_transform
-#   puts n
-# end
-# # num_iterations.times { long_fft.apply_transform }
-# puts long_fft.signal.take(8).join('')
-#
+
+# Part 2:
+# Note that digit n of the output depends only on digits n and farther of the
+# input.  In this case, the offset is so large that applying the transform once
+# is the same as multiplying by a triangular matrix with ones on and above the
+# diagonal and zeros below.
+
+offset = starting_signal.take(7).join('').to_i
+puts offset
+remaining_length = starting_signal.length * 10000 - offset
+puts remaining_length
+long_signal =
+  (remaining_length / starting_signal.length)
+  .times
+  .map { starting_signal }
+  .inject(starting_signal.drop(offset % starting_signal.length), &:concat)
+puts long_signal.length
+num_iterations.times do |n|
+  (long_signal.length - 2).downto(0) do |i|
+    long_signal[i] += long_signal[i+1]
+    long_signal[i] %= 10
+  end
+end
+puts long_signal.take(8).join('')
+
