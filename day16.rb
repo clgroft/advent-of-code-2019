@@ -42,7 +42,7 @@ num_iterations = ARGV.shift.to_i
 starting_signal = ARGF.read.strip.chars.map(&:to_i)
 fft = FFT.new(starting_signal)
 num_iterations.times { fft.apply_transform }
-puts fft.signal.take(8).join('')
+puts "Part 1 solution: #{fft.signal.take(8).join}"
 
 
 # Part 2:
@@ -52,20 +52,16 @@ puts fft.signal.take(8).join('')
 # diagonal and zeros below.
 
 offset = starting_signal.take(7).join('').to_i
-puts offset
 remaining_length = starting_signal.length * 10000 - offset
-puts remaining_length
 long_signal =
-  (remaining_length / starting_signal.length)
-  .times
+  (remaining_length / starting_signal.length).times
   .map { starting_signal }
   .inject(starting_signal.drop(offset % starting_signal.length), &:concat)
-puts long_signal.length
 num_iterations.times do |n|
   (long_signal.length - 2).downto(0) do |i|
     long_signal[i] += long_signal[i+1]
     long_signal[i] %= 10
   end
 end
-puts long_signal.take(8).join('')
+puts "Part 2 solution: #{long_signal.take(8).join}"
 
