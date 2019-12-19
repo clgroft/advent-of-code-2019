@@ -9,55 +9,40 @@ class KeyPathSearch
     find_entrance
     find_all_keys
     find_all_paths_between_keys
+    @known_distances_from_states = {}
   end
 
-  def fewest_steps_to_all_keys
-    partial_solutions = PQueue.new([{
-      distance_so_far: 0,
-      locations: @entrances,
-      keys_held: Set[],
-    }]) { |a, b| b[:distance_so_far] <=> a[:distance_so_far] }
-    shortest_distance_found = nil
-    shortest_distance_to_states = {}
+  def add_cross_barriers
+    i, j = @initial_entrance
+    @tunnel_map[i-1][j] = '#'
+    @tunnel_map[i][j-1] = '#'
+    @tunnel_map[i][j] = '#'
+    @tunnel_map[i][j+1] = '#'
+    @tunnel_map[i+1][j] = '#'
 
-    until partial_solutions.empty?
-      current_attempt = partial_solutions.pop
-      # puts "#{current_attempt}"
-      distance_so_far = current_attempt[:distance_so_far]
+    @entrances = [ [i-1,j-1], [i-1,j+1], [i+1,j-1], [i+1,j+1] ]
 
-      keys_held = current_attempt[:keys_held]
-      if keys_held.size == @key_locations.size
-        shortest_distance_found = distance_so_far
-        next
-      end
+    # Have to rebuild the cache since the map has been modified
+    find_all_paths_between_keys
+    @known_distances_from_states = {}
+  end
 
-      locations = current_attempt[:locations]
-      state = {keys_held: keys_held, locations: locations}
-      shortest_to_here = shortest_distance_to_states[state]
-      next if shortest_to_here && shortest_to_here <= distance_so_far
-      shortest_distance_to_states[state] = distance_so_far
+  def fewest_steps_to_all_keys(locations=@entrances, keys_held=Set[])
+    return 0 if keys_held.size == @key_locations.size
 
-      if shortest_distance_found && shortest_distance_found <= distance_so_far
-        return shortest_distance_found
-      end
-
-      locations.each_with_index do |location, i|
-        @paths_to_keys[location]
-          .reject { |path| path[:distance] == 0 }
-          .select { |path| path[:keys_needed] <= keys_held }
-          .each do |path|
-            new_locations = locations.dup
-            new_locations[i] = path[:location]
-            partial_solutions << {
-              distance_so_far: distance_so_far + path[:distance],
-              locations: new_locations,
-              keys_held: keys_held | Set[path[:key]],
-            }
-          end
-      end
-    end
-
-    shortest_distance_found
+    @known_distances_from_states[{locations: locations, keys_held: keys_held}] ||=
+      locations
+        .each_with_index
+        .map do |location, i|
+          @paths_to_keys[location]
+            .reject { |path| keys_held.include?(path[:key]) }
+            .select { |path| path[:keys_needed] <= keys_held }
+            .map do |path|
+              new_locations = locations.dup
+              new_locations[i] = path[:location]
+              path[:distance] + fewest_steps_to_all_keys(new_locations, keys_held | Set[path[:key]])
+            end.min  # can be nil if no paths are followed
+        end.reject(&:nil?).min
   end
 
   private
@@ -159,5 +144,9 @@ end
 tunnel_map = ARGF.read.split("\n")
 key_path_search = KeyPathSearch.new(tunnel_map)
 fewest_steps = key_path_search.fewest_steps_to_all_keys
-puts "Fewest steps to all keys: #{fewest_steps}"
+puts "Fewest steps to all keys (before partition): #{fewest_steps}"
+
+key_path_search.add_cross_barriers
+fewest_steps = key_path_search.fewest_steps_to_all_keys
+puts "Fewest steps to all keys (after partition): #{fewest_steps}"
 
