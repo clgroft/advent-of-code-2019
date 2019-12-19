@@ -104,20 +104,17 @@ class KeyPathSearch
       loc = location_queue.shift
       curr_path = known_paths[loc]
 
-      DIRECTIONS.values.each do |move|
-        new_loc = move.call(*loc)
-        new_contents = contents(*new_loc)
-        next if new_contents == '#' || known_paths.has_key?(new_loc)
-
-        location_queue << new_loc
-
-        curr_contents = curr_path[:contents]
-        known_paths[new_loc] = {
-          distance: curr_path[:distance] + 1,
-          contents: new_contents,
-          keys_needed: new_keys_needed(curr_path[:keys_needed], curr_contents, starting_contents),
-        }
-      end
+      DIRECTIONS.values
+        .map { |move| move.call(*loc) }
+        .reject { |new_loc| is_wall?(new_loc) || known_paths.has_key?(new_loc) }
+        .each do |new_loc|
+          location_queue << new_loc
+          known_paths[new_loc] = {
+            distance: curr_path[:distance] + 1,
+            contents: contents(*new_loc),
+            keys_needed: new_keys_needed(curr_path[:keys_needed], curr_path[:contents], starting_contents),
+          }
+        end
     end
 
     known_paths
@@ -131,6 +128,10 @@ class KeyPathSearch
           location: k,
         }
       end
+  end
+
+  def is_wall?(loc)
+    contents(*loc) == '#'
   end
 
   def contents(i, j)
