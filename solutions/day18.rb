@@ -14,20 +14,16 @@ class KeyPathSearch
   def fewest_steps_to_all_keys
     partial_solutions = PQueue.new([{
       distance_so_far: 0,
-      location: @entrances[0],
+      locations: @entrances,
       keys_held: Set[],
-      keys_found_in_order: [],
     }]) { |a, b| b[:distance_so_far] <=> a[:distance_so_far] }
     shortest_distance_found = nil
     shortest_distance_to_states = {}
 
     until partial_solutions.empty?
       current_attempt = partial_solutions.pop
+      # puts "#{current_attempt}"
       distance_so_far = current_attempt[:distance_so_far]
-
-      if shortest_distance_found && shortest_distance_found <= distance_so_far
-        return shortest_distance_found
-      end
 
       keys_held = current_attempt[:keys_held]
       if keys_held.size == @key_locations.size
@@ -35,23 +31,30 @@ class KeyPathSearch
         next
       end
 
-      location = current_attempt[:location]
-      state = {keys_held: keys_held, location: location}
+      locations = current_attempt[:locations]
+      state = {keys_held: keys_held, locations: locations}
       shortest_to_here = shortest_distance_to_states[state]
       next if shortest_to_here && shortest_to_here <= distance_so_far
       shortest_distance_to_states[state] = distance_so_far
 
-      @paths_to_keys[location]
-        .reject { |path| keys_held.include?(path[:key]) }
-        .select { |path| path[:keys_needed] <= keys_held }
-        .each do |path|
-          partial_solutions << {
-            distance_so_far: distance_so_far + path[:distance],
-            location: path[:location],
-            keys_held: keys_held | Set[path[:key]],
-            keys_found_in_order: current_attempt[:keys_found_in_order] + [path[:key]]
-          }
-        end
+      if shortest_distance_found && shortest_distance_found <= distance_so_far
+        return shortest_distance_found
+      end
+
+      locations.each_with_index do |location, i|
+        @paths_to_keys[location]
+          .reject { |path| path[:distance] == 0 }
+          .select { |path| path[:keys_needed] <= keys_held }
+          .each do |path|
+            new_locations = locations.dup
+            new_locations[i] = path[:location]
+            partial_solutions << {
+              distance_so_far: distance_so_far + path[:distance],
+              locations: new_locations,
+              keys_held: keys_held | Set[path[:key]],
+            }
+          end
+      end
     end
 
     shortest_distance_found
@@ -94,7 +97,7 @@ class KeyPathSearch
 
   def find_all_paths_between_keys
     @paths_to_keys = {}
-    @entrances.concat(@key_locations.values).each do |loc|
+    @entrances.dup.concat(@key_locations.values).each do |loc|
       @paths_to_keys[loc] = find_all_paths_from_location(loc)
     end
   end
@@ -124,6 +127,7 @@ class KeyPathSearch
     end
     known_paths
       .select { |_k, v| KEY.include?(v[:contents]) }
+      .reject { |_k, v| v[:distance] == 0 }
       .map do |k, v|
         {
           key: v[:contents],
