@@ -9,11 +9,6 @@ class KeyPathSearch
     find_entrance
     find_all_keys
     find_all_paths_between_keys
-
-    # @tunnel_map.each { |row| puts row }
-    # puts "Entrance is at #{@entrance}"
-    # pp @key_locations
-    # pp @paths_to_keys
   end
 
   def fewest_steps_to_all_keys
@@ -28,17 +23,14 @@ class KeyPathSearch
 
     until partial_solutions.empty?
       current_attempt = partial_solutions.pop
-      # puts current_attempt
       distance_so_far = current_attempt[:distance_so_far]
 
       if shortest_distance_found && shortest_distance_found <= distance_so_far
-        # puts "Already have distance #{shortest_distance_found}"
         return shortest_distance_found
       end
 
       keys_held = current_attempt[:keys_held]
       if keys_held.size == @key_locations.size
-        # puts "Sequence #{current_attempt[:keys_found_in_order]} works in #{distance_so_far} steps"
         shortest_distance_found = distance_so_far
         next
       end
@@ -64,28 +56,6 @@ class KeyPathSearch
 
     shortest_distance_found
   end
-
-  # def fewest_steps_to_all_keys(location=@entrance, keys_held=Set[], pruning_length=nil)
-  #   puts "#{' ' * keys_held.size}#{location}: #{pruning_length}"
-  #
-  #   return 0 if pruning_length && pruning_length <= 0
-  #   return 0 if keys_held.size == @key_locations.size
-  #
-  #   paths_to_consider = @paths_to_keys[location]
-  #     .reject { |path| keys_held.include?(path[:key]) }
-  #     .select { |path| path[:keys_needed] <= keys_held }
-  #   best_length = pruning_length
-  #   paths_to_consider.each do |path|
-  #     path_distance = path[:distance]
-  #     best_length_from_path = path_distance + fewest_steps_to_all_keys(
-  #       path[:location],
-  #       keys_held | Set[path[:key]],
-  #       best_length ? best_length - path_distance : nil
-  #     )
-  #     best_length = best_length_from_path if best_length.nil? || best_length_from_path < best_length
-  #   end
-  #   best_length
-  # end
 
   private
 
@@ -129,7 +99,6 @@ class KeyPathSearch
   end
 
   def find_all_paths_from_location(location)
-    paths_to_keys = []
     starting_contents = contents(*location)
     known_paths = {location => {distance: 0, contents: starting_contents, keys_needed: Set[]}}
     location_queue = [location]
