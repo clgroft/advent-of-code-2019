@@ -14,7 +14,7 @@ class KeyPathSearch
   def fewest_steps_to_all_keys
     partial_solutions = PQueue.new([{
       distance_so_far: 0,
-      location: @entrance,
+      location: @entrances[0],
       keys_held: Set[],
       keys_found_in_order: [],
     }]) { |a, b| b[:distance_so_far] <=> a[:distance_so_far] }
@@ -71,12 +71,13 @@ class KeyPathSearch
   KEY = ('a'..'z')
 
   def find_entrance
-    @entrance = @tunnel_map.each_with_index
+    @initial_entrance = @tunnel_map.each_with_index
       .map { |row, i| [i, (row =~ /@/)] }
       .select { |_i, j| j }
       .first
-    i, j = @entrance
+    i, j = @initial_entrance
     set_contents(i, j, OPEN_SPACE)
+    @entrances = [@initial_entrance]
   end
 
   def find_all_keys
@@ -93,7 +94,7 @@ class KeyPathSearch
 
   def find_all_paths_between_keys
     @paths_to_keys = {}
-    [@entrance].concat(@key_locations.values).each do |loc|
+    @entrances.concat(@key_locations.values).each do |loc|
       @paths_to_keys[loc] = find_all_paths_from_location(loc)
     end
   end
