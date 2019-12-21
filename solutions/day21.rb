@@ -9,16 +9,16 @@ computer = Intcode.new(initial_memory)
 # print prompt
 prompt = []
 computer.run_program { |n| prompt << n.chr }
-# puts prompt.join
+part2_computer = computer.dup  # don't have to print prompt again
 
 # load and run springcode program
 springcode = [
-  "NOT A J",
-  "NOT B T",
-  "OR T J",
-  "NOT C T",
-  "OR T J",
-  "AND D J",
+  "NOT J T", # T = true
+  "AND A T",
+  "AND B T",
+  "AND C T", # T = A & B & C
+  "NOT T J", # J = ~(A & B & C)
+  "AND D J", # J = ~(A & B & C) & D
   "WALK",
 ].map { |l| l + "\n" }.join
 springcode.chars.each { |c| computer.add_input(c.ord) }
@@ -28,9 +28,33 @@ computer.run_program { |n| output_codes << n }
 # did it work?
 if output_codes.last > 255
   puts "Success!  Hull damage: #{output_codes.last}"
-  exit 0
 else
   puts "Failed; map below:"
+  puts output_codes.map(&:chr).join
+  exit 1
+end
+
+springcode = [
+  "NOT T J", # T = false, J = true
+  "AND A J",
+  "AND B J",
+  "AND C J", # J = A & B & C
+  "NOT J T", # T = ~(A & B & C)
+  "AND T J", # J = false
+  "OR E J",
+  "OR H J",
+  "AND D J",
+  "AND T J",
+  "RUN",
+].map { |l| l + "\n" }.join
+springcode.chars.each { |c| part2_computer.add_input(c.ord) }
+output_codes = []
+part2_computer.run_program { |n| output_codes << n }
+
+if output_codes.last > 255
+  puts "Success!  Total hull damage: #{output_codes.last}"
+else
+  puts "Failed; output below:"
   puts output_codes.map(&:chr).join
   exit 1
 end
