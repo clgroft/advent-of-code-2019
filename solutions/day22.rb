@@ -1,8 +1,7 @@
 #!/usr/bin/env ruby
 
 
-# A shuffle for a deck of size n, where position i contains card ai + b (mod n).
-# (In hindsight, this would have been easier to follow if I'd kept track of the other direction.)
+# A shuffle for a deck of size n, where card i is in position ai + b (mod n).
 class EfficientShuffle
   attr_reader :n, :a, :b
   def initialize(n, a=1, b=0)
@@ -12,23 +11,23 @@ class EfficientShuffle
   end
 
   def reverse
-    self.class.new(n, -a % n, (b-a) % n)
+    self.class.new(n, -a % n, (-b-1) % n)
   end
 
   def cut(k)
-    self.class.new(n, a, (((a * k) % n) + b) % n)
+    self.class.new(n, a, (b-k) % n)
   end
 
   def increment(k)
-    self.class.new(n, (a * inverse(k)) % n, b)
-  end
-
-  def card_at(i)
-    (((a * i) % n) + b) % n
+    self.class.new(n, (a*k) % n, (b*k) % n)
   end
 
   def position_of(c)
-    (((c - b) % n) * a_inverse) % n
+    (((a * c) % n) + b) % n
+  end
+
+  def card_at(i)
+    (((i - b) % n) * a_inverse) % n
   end
 
   def pow(p)
@@ -46,6 +45,7 @@ class EfficientShuffle
     compose(self)
   end
 
+  # The result of performing other followed by self.
   def compose(other)
     self.class.new(n, a * other.a % n, (((a * other.b) % n) + b) % n)
   end
