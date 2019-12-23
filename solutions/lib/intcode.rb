@@ -126,6 +126,10 @@ class CPU
     @input.push(new_input)
   end
 
+  def input_queue_empty?
+    @input.empty?
+  end
+
   def add
     @state.set(3, @state.get(1) + @state.get(2))
     @state.advance_pc(4)
@@ -199,6 +203,10 @@ class Intcode
 
   def add_input(new_input)
     @cpu.add_input(new_input)
+  end
+
+  def input_queue_empty?
+    @cpu.input_queue_empty?
   end
 
   def run_program(&proc)
