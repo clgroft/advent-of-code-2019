@@ -11,7 +11,7 @@ class EfficientShuffle
   end
 
   def reverse
-    self.class.new(n, -a % n, (-b-1) % n)
+    cut(-1).increment(-1)
   end
 
   def cut(k)
